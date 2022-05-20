@@ -16,7 +16,7 @@ def init_window():
     glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
     # création et parametrage de la fenêtre
     glfw.window_hint(glfw.RESIZABLE, True)  # changer en false
-    window = glfw.create_window(800, 600, 'OpenGL', None, None)
+    window = glfw.create_window(800, 800, 'OpenGL', None, None)
     # parametrage de la fonction de gestion des évènements
     glfw.set_key_callback(window, key_callback)
     return window
@@ -29,16 +29,33 @@ def init_context(window):
     # activation de la gestion de la profondeur
     GL.glEnable(GL.GL_DEPTH_TEST)
     # choix de la couleur de fond
-    GL.glClearColor(0.0, 0, 1, 1.0)
+    GL.glClearColor(1, 0, 0, 1.0)
     print(f"OpenGL: {GL.glGetString(GL.GL_VERSION).decode('ascii')}")
 
 
 def init_program():
-    pass
+    program = create_program_from_file("shader.vert", "shader.frag")
+    GL.glUseProgram(program)
 
 
 def init_data():
-    pass
+    sommets = np.array(((0, 0, 0), (1, 0, 0), (0, 1, 0)), np.float32)
+    # attribution d'une liste d'e ́tat (1 indique la cre ́ation d'une seule liste)
+    vao = GL.glGenVertexArrays(1)
+    # affectation de la liste d'e ́tat courante
+    GL.glBindVertexArray(vao)
+    # attribution d’un buffer de donnees (1 indique la cre ́ation d’un seul buffer)
+    vbo = GL.glGenBuffers(1)
+    # affectation du buffer courant
+    GL.glBindBuffer(GL.GL_ARRAY_BUFFER, vbo)
+    # copie des donnees des sommets sur la carte graphique
+    GL.glBufferData(GL.GL_ARRAY_BUFFER, sommets, GL.GL_STATIC_DRAW)
+    # Les deux commandes suivantes sont stockees dans l'etat du vao courant # Active l'utilisation des donnees de positions
+    # (le 0 correspond a la location dans le vertex shader)
+    GL.glEnableVertexAttribArray(0)
+    # Indique comment le buffer courant (dernier vbo "binde")
+    # est utilise pour les positions des sommets
+    GL.glVertexAttribPointer(0, 3, GL.GL_FLOAT, GL.GL_FALSE, 0, None)
 
 
 def run(window):
@@ -49,10 +66,14 @@ def run(window):
 
     while not glfw.window_should_close(window):
         # nettoyage de la fenêtre : fond et profondeur
-        i, g, delta = changeColor(i, g, delta)
+        #i, g, delta = changeColor(i, g, delta)
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
 
         #  l'affichage se fera ici
+        GL.glDrawArrays(GL.GL_TRIANGLES, 0, 3)  # ou avec GL.GL_LINE_LOOP
+        # GL.glPointSize(20.0) #changement de la taille des points
+        # GL.glDrawArrays(GL.GL_POINTS, 0, 3)
+        # GL.glDrawArrays(GL.GL_LINE_LOOP, 0, 3) affichage non plein
 
         # changement de buffer d'affichage pour éviter un effet de scintillement
         glfw.swap_buffers(window)
@@ -86,8 +107,8 @@ def compile_shader(shader_content, shader_type):
     success = GL.glGetShaderiv(shader_id, GL.GL_COMPILE_STATUS)
     if not success:
         log = GL.glGetShaderInfoLog(shader_id).decode('ascii')
-    print(f'{25*"-"}\nError compiling shader: \n\
-    {shader_content}\n{5*"-"}\n{log}\n{25*"-"}')
+        print(
+            f'{25*"-"}\nError compiling shader: \n\{shader_content}\n{5*"-"}\n{log}\n{25*"-"}')
     return shader_id
 
 
@@ -123,6 +144,7 @@ def main():
     init_context(window)
     init_program()
     init_data()
+
     run(window)
     glfw.terminate()
 
