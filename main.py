@@ -29,7 +29,7 @@ def init_context(window):
     # activation de la gestion de la profondeur
     GL.glEnable(GL.GL_DEPTH_TEST)
     # choix de la couleur de fond
-    GL.glClearColor(1, 0, 0, 1.0)
+    GL.glClearColor(0, 0, 1, 1.0)
     print(f"OpenGL: {GL.glGetString(GL.GL_VERSION).decode('ascii')}")
 
 
@@ -80,6 +80,15 @@ def run(window):
         # gestion des évènements
         glfw.poll_events()
         # print(glfw.get_time())
+        # Re ́cupe`re l'identifiant du programme courant
+        prog = GL.glGetIntegerv(GL.GL_CURRENT_PROGRAM)
+        # Re ́cupe`re l'identifiant de la variable translation dans le programme courant
+        loc = GL.glGetUniformLocation(prog, "translation")
+        # Ve ́rifie que la variable existe
+        if loc == -1:
+            print("Pas de variable uniforme : translation")
+        # Modifie la variable pour le programme courant
+        GL.glUniform4f(loc, -0.5, 0, 0, 5)
 
 
 def changeColor(i, g, delta):
@@ -144,7 +153,6 @@ def main():
     init_context(window)
     init_program()
     init_data()
-
     run(window)
     glfw.terminate()
 

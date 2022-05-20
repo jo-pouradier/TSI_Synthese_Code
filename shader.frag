@@ -26,11 +26,11 @@ void main (void)
   // color = vec4(r,g,0.0,0.0);
 
   //coloration avec cercle
-  float x=gl_FragCoord.x; 
-  float y=gl_FragCoord.y;
+  float x=gl_FragCoord.x/(800*2) - 0.5 ;  //avec ecran retina on a deux fois plus de pixel
+  float y=gl_FragCoord.y/(800*2) - 0.5 ;
   float g = 1.0;
   float r = 0.0;
-  if (sqrt(x*x+y*y) > 100) {
+  if (x*x + y*y < 0.05*0.05) {
     r = 1.0;
     g = 0.0;
   }
