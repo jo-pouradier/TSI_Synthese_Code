@@ -4,6 +4,7 @@ import os
 import OpenGL.GL as GL
 import glfw
 import numpy as np
+import pyrr
 
 
 def init_window():
@@ -100,6 +101,7 @@ def key_callback(win, key, scancode, action, mods):
 
     global boolup, booldown, boolleft, boolright
     global color_Back
+    global rot3
 
     deltaPos = 0.02
 
@@ -139,7 +141,14 @@ def key_callback(win, key, scancode, action, mods):
     if key == glfw.KEY_B and action == glfw.PRESS:
         color_Back = "b"
 
-    if key == glfw.KEY
+    if key == glfw.KEY_I and action == glfw.PRESS:
+        rot3 = pyrr.matrix33.create_from_z_rotation(np.pi/2)
+    if key == glfw.KEY_K and action == glfw.PRESS:
+        rot3 = pyrr.matrix33.create_from_z_rotation(0)
+    # if key == glfw.KEY_J and action == glfw.PRESS:
+    #     rot3 += pyrr.matrix33.create_from_z_rotation(0.1)
+    # if key == glfw.KEY_I and action == glfw.PRESS:
+    #     rot3 -= pyrr.matrix33.create_from_z_rotation(0.1)
 
     display_callback()
     changeColorBack()
@@ -147,18 +156,25 @@ def key_callback(win, key, scancode, action, mods):
 
 def display_callback():
     global deltaX, deltaY
+    global rot
     # Re ́cupe`re l'identifiant du programme courant
     prog = GL.glGetIntegerv(GL.GL_CURRENT_PROGRAM)
     # Re ́cupe`re l'identifiant de la variable translation dans le programme courant
     loc = GL.glGetUniformLocation(prog, "translation")
-    # Ve ́rifie que la variable existe
+    # rotation
+    rot = GL.glGetUniformLocation(prog, "rotation")
+    rot4 = pyrr.matrix44.create_from_matrix33(rot3)
+    # Verifie que la variable existe
     if loc == -1:
         print("Pas de variable uniforme : translation")
     GL.glUniform4f(loc, deltaX, deltaY, 0, 0)
+    if rot == -1:
+        print("Pas de variable uniforme : rotation")
     # Modifie la variable pour le programme courant
+    GL.glUniformMatrix4fv(rot, 1, GL.GL_FALSE, rot4)
 
 
-# compilation d'un shader donne ́ selon son type
+# compilation d'un shader donne selon son type
 def compile_shader(shader_content, shader_type):
     shader_id = GL.glCreateShader(shader_type)
     GL.glShaderSource(shader_id, shader_content)
@@ -210,6 +226,7 @@ def main():
 if __name__ == '__main__':
     deltaX = 0
     deltaY = 0
+    rot3 = pyrr.matrix33.create_from_z_rotation(np.pi/2)
     boolup = False
     booldown = False
     boolright = False
