@@ -3,6 +3,7 @@
 // Variable d'entrée, ici la position
 layout (location = 0) in vec3 position;
 uniform vec4 translation;
+uniform vec3 rotation;
 
 //Un Vertex Shader minimaliste
 void main (void)
@@ -16,4 +17,5 @@ void main (void)
   // p+=vec4(-0.7,-0.8,0.0,0.0);
   // gl_Position = p;
   gl_Position+= translation;
+  gl_Position += rotation;
 }

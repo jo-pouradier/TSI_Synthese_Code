@@ -29,7 +29,7 @@ def init_context(window):
     # activation de la gestion de la profondeur
     GL.glEnable(GL.GL_DEPTH_TEST)
     # choix de la couleur de fond
-    GL.glClearColor(0, 0, 1, 1.0)
+    GL.glClearColor(0, 0, 1, 1)
     print(f"OpenGL: {GL.glGetString(GL.GL_VERSION).decode('ascii')}")
 
 
@@ -50,7 +50,8 @@ def init_data():
     GL.glBindBuffer(GL.GL_ARRAY_BUFFER, vbo)
     # copie des donnees des sommets sur la carte graphique
     GL.glBufferData(GL.GL_ARRAY_BUFFER, sommets, GL.GL_STATIC_DRAW)
-    # Les deux commandes suivantes sont stockees dans l'etat du vao courant # Active l'utilisation des donnees de positions
+    # Les deux commandes suivantes sont stockees dans l'etat du vao courant
+    # # Active l'utilisation des donnees de positions
     # (le 0 correspond a la location dans le vertex shader)
     GL.glEnableVertexAttribArray(0)
     # Indique comment le buffer courant (dernier vbo "binde")
@@ -60,13 +61,10 @@ def init_data():
 
 def run(window):
     # boucle d'affichage
-    i = 0
-    g = 1 - i
-    delta = 0.01
-
+    global boolleft
+    global deltaX, deltaY
     while not glfw.window_should_close(window):
         # nettoyage de la fenêtre : fond et profondeur
-        #i, g, delta = changeColor(i, g, delta)
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
 
         #  l'affichage se fera ici
@@ -79,33 +77,85 @@ def run(window):
         glfw.swap_buffers(window)
         # gestion des évènements
         glfw.poll_events()
-        # print(glfw.get_time())
-        # Re ́cupe`re l'identifiant du programme courant
-        prog = GL.glGetIntegerv(GL.GL_CURRENT_PROGRAM)
-        # Re ́cupe`re l'identifiant de la variable translation dans le programme courant
-        loc = GL.glGetUniformLocation(prog, "translation")
-        # Ve ́rifie que la variable existe
-        if loc == -1:
-            print("Pas de variable uniforme : translation")
-        # Modifie la variable pour le programme courant
-        GL.glUniform4f(loc, -0.5, 0, 0, 5)
+        glfw.set_key_callback(window, key_callback)
 
 
-def changeColor(i, g, delta):
-    i += delta
-    if i >= 1:
-        delta = -0.01
-    if i <= 0:
-        delta = 0.01
-    g = 1-i
-    GL.glClearColor(1, g, i, 1)
-    return i, g, delta
+def changeColorBack():
+    global color_Back
+    colorisation = (0, 0, 0)
+    if color_Back == "g":
+        colorisation = (0, 1, 0)
+    if color_Back == "r":
+        colorisation = (1, 0, 0)
+    if color_Back == "b":
+        colorisation = (0, 0, 1)
+    r, g, b = colorisation
+    GL.glClearColor(r, g, b, 1)
 
 
 def key_callback(win, key, scancode, action, mods):
     # sortie du programme si appui sur la touche 'echap'
     if key == glfw.KEY_ESCAPE and action == glfw.PRESS:
         glfw.set_window_should_close(win, glfw.TRUE)
+
+    global boolup, booldown, boolleft, boolright
+    global color_Back
+
+    deltaPos = 0.02
+
+    global deltaX, deltaY
+
+    if key == glfw.KEY_UP and action == glfw.PRESS:
+        boolup = True
+    if key == glfw.KEY_RIGHT and action == glfw.PRESS:
+        boolright = True
+    if key == glfw.KEY_DOWN and action == glfw.PRESS:
+        booldown = True
+    if key == glfw.KEY_LEFT and action == glfw.PRESS:
+        boolleft = True
+
+    if key == glfw.KEY_UP and action == glfw.RELEASE:
+        boolup = False
+    if key == glfw.KEY_RIGHT and action == glfw.RELEASE:
+        boolright = False
+    if key == glfw.KEY_DOWN and action == glfw.RELEASE:
+        booldown = False
+    if key == glfw.KEY_LEFT and action == glfw.RELEASE:
+        boolleft = False
+
+    if boolup:
+        deltaY += deltaPos
+    if booldown:
+        deltaY += -deltaPos
+    if boolright:
+        deltaX += deltaPos
+    if boolleft:
+        deltaX += -deltaPos
+
+    if key == glfw.KEY_G and action == glfw.PRESS:
+        color_Back = "g"
+    if key == glfw.KEY_R and action == glfw.PRESS:
+        color_Back = "r"
+    if key == glfw.KEY_B and action == glfw.PRESS:
+        color_Back = "b"
+
+    if key == glfw.KEY
+
+    display_callback()
+    changeColorBack()
+
+
+def display_callback():
+    global deltaX, deltaY
+    # Re ́cupe`re l'identifiant du programme courant
+    prog = GL.glGetIntegerv(GL.GL_CURRENT_PROGRAM)
+    # Re ́cupe`re l'identifiant de la variable translation dans le programme courant
+    loc = GL.glGetUniformLocation(prog, "translation")
+    # Ve ́rifie que la variable existe
+    if loc == -1:
+        print("Pas de variable uniforme : translation")
+    GL.glUniform4f(loc, deltaX, deltaY, 0, 0)
+    # Modifie la variable pour le programme courant
 
 
 # compilation d'un shader donne ́ selon son type
@@ -158,4 +208,11 @@ def main():
 
 
 if __name__ == '__main__':
+    deltaX = 0
+    deltaY = 0
+    boolup = False
+    booldown = False
+    boolright = False
+    boolleft = False
+    color_Back = "b"
     main()

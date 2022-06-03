@@ -3,14 +3,14 @@
 // Variable de sortie (sera utilisé comme couleur)
 out vec4 color;
 
+
 //Un Fragment Shader minimaliste
-void main (void)
-{
+void main (void){
   //Couleur du fragment
   // coloration simple
-  //float r = gl_FragCoord.x/800.0; 
-  //float g = gl_FragCoord.y/800.0; 
-  //color = vec4(r,g,0.0,0.0); 
+  // float r = gl_FragCoord.x/800.0; 
+  // float g = gl_FragCoord.y/800.0; 
+  // color = vec4(r,g,0.0,0.0); 
 
   //coloration "compexe" avec des lignes
   // float x=gl_FragCoord.x/800.0; 
