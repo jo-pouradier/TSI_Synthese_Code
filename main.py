@@ -79,6 +79,7 @@ def run(window):
         # gestion des évènements
         glfw.poll_events()
         glfw.set_key_callback(window, key_callback)
+        display_callback()
 
 
 def changeColorBack():
@@ -100,6 +101,8 @@ def key_callback(win, key, scancode, action, mods):
         glfw.set_window_should_close(win, glfw.TRUE)
 
     global boolup, booldown, boolleft, boolright
+    global boolPhiZ
+    global PhiZ
     global color_Back
     global rot3
 
@@ -132,6 +135,15 @@ def key_callback(win, key, scancode, action, mods):
     if key == glfw.KEY_B and action == glfw.PRESS:
         color_Back = "b"
 
+    if key == glfw.KEY_J and action == glfw.PRESS:
+        boolPhiZ = True
+    if key == glfw.KEY_L and action == glfw.PRESS:
+        boolPhiZ = True
+    if key == glfw.KEY_J and action == glfw.RELEASE:
+        boolPhiZ = False
+    if key == glfw.KEY_L and action == glfw.RELEASE:
+        boolPhiZ = False
+
     if boolup:
         deltaY += deltaPos
     if booldown:
@@ -141,28 +153,24 @@ def key_callback(win, key, scancode, action, mods):
     if boolleft:
         deltaX += -deltaPos
 
-    if key == glfw.KEY_I and action == glfw.PRESS:
-        rot3 += pyrr.matrix33.create_from_x_rotation(0.1)
-    if key == glfw.KEY_K and action == glfw.PRESS:
-        rot3 -= pyrr.matrix33.create_from_x_rotation(0.1)
-    if key == glfw.KEY_J and action == glfw.PRESS:
-        rot3 += pyrr.matrix33.create_from_y_rotation(0.1)
-    if key == glfw.KEY_L and action == glfw.PRESS:
-        rot3 -= pyrr.matrix33.create_from_y_rotation(0.1)
+    if boolPhiZ and key == glfw.KEY_L:
+        PhiZ -= 0.1
+    if boolPhiZ and key == glfw.KEY_J:
+        PhiZ += 0.1
 
     changeColorBack()
 
 
 def display_callback():
     global deltaX, deltaY
-    global rot, rot3
+    global rot, rot3, PhiZ
     # Re ́cupe`re l'identifiant du programme courant
     prog = GL.glGetIntegerv(GL.GL_CURRENT_PROGRAM)
     # Re ́cupe`re l'identifiant de la variable translation dans le programme courant
     loc = GL.glGetUniformLocation(prog, "translation")
     # rotation
     rot = GL.glGetUniformLocation(prog, "rotation")
-    rot3 = 
+    rot3 = pyrr.matrix33.create_from_z_rotation(PhiZ)
     rot4 = pyrr.matrix44.create_from_matrix33(rot3)
     # Verifie que la variable existe
     if loc == -1:
@@ -224,13 +232,9 @@ def main():
 
 
 if __name__ == '__main__':
-    deltaX = 0
-    deltaY = 0
-    deltaZ = 0
-    rot3 = 0
-    boolup = False
-    booldown = False
-    boolright = False
-    boolleft = False
+    deltaX, deltaY, deltaZ = 0, 0, 0
+    PhiX, PhiY, PhiZ = 0, 0, 0
+    boolup, booldown, boolright, boolleft = False, False, False, False
+    boolPhiZ = False
     color_Back = "b"
     main()
