@@ -18,7 +18,7 @@ void main (void)
   // p+=vec4(-0.7,-0.8,0.0,0.0);
   // gl_Position = p;
   p += translation;
-  p = rotation * p;
+  p *= rotation;
 
   gl_Position = p;
 

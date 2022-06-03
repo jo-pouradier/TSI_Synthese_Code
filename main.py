@@ -125,6 +125,13 @@ def key_callback(win, key, scancode, action, mods):
     if key == glfw.KEY_LEFT and action == glfw.RELEASE:
         boolleft = False
 
+    if key == glfw.KEY_G and action == glfw.PRESS:
+        color_Back = "g"
+    if key == glfw.KEY_R and action == glfw.PRESS:
+        color_Back = "r"
+    if key == glfw.KEY_B and action == glfw.PRESS:
+        color_Back = "b"
+
     if boolup:
         deltaY += deltaPos
     if booldown:
@@ -134,35 +141,28 @@ def key_callback(win, key, scancode, action, mods):
     if boolleft:
         deltaX += -deltaPos
 
-    if key == glfw.KEY_G and action == glfw.PRESS:
-        color_Back = "g"
-    if key == glfw.KEY_R and action == glfw.PRESS:
-        color_Back = "r"
-    if key == glfw.KEY_B and action == glfw.PRESS:
-        color_Back = "b"
-
     if key == glfw.KEY_I and action == glfw.PRESS:
-        rot3 = pyrr.matrix33.create_from_z_rotation(np.pi/2)
+        rot3 += pyrr.matrix33.create_from_x_rotation(0.1)
     if key == glfw.KEY_K and action == glfw.PRESS:
-        rot3 = pyrr.matrix33.create_from_z_rotation(0)
-    # if key == glfw.KEY_J and action == glfw.PRESS:
-    #     rot3 += pyrr.matrix33.create_from_z_rotation(0.1)
-    # if key == glfw.KEY_I and action == glfw.PRESS:
-    #     rot3 -= pyrr.matrix33.create_from_z_rotation(0.1)
+        rot3 -= pyrr.matrix33.create_from_x_rotation(0.1)
+    if key == glfw.KEY_J and action == glfw.PRESS:
+        rot3 += pyrr.matrix33.create_from_y_rotation(0.1)
+    if key == glfw.KEY_L and action == glfw.PRESS:
+        rot3 -= pyrr.matrix33.create_from_y_rotation(0.1)
 
-    display_callback()
     changeColorBack()
 
 
 def display_callback():
     global deltaX, deltaY
-    global rot
+    global rot, rot3
     # Re ́cupe`re l'identifiant du programme courant
     prog = GL.glGetIntegerv(GL.GL_CURRENT_PROGRAM)
     # Re ́cupe`re l'identifiant de la variable translation dans le programme courant
     loc = GL.glGetUniformLocation(prog, "translation")
     # rotation
     rot = GL.glGetUniformLocation(prog, "rotation")
+    rot3 = 
     rot4 = pyrr.matrix44.create_from_matrix33(rot3)
     # Verifie que la variable existe
     if loc == -1:
@@ -226,7 +226,8 @@ def main():
 if __name__ == '__main__':
     deltaX = 0
     deltaY = 0
-    rot3 = pyrr.matrix33.create_from_z_rotation(np.pi/2)
+    deltaZ = 0
+    rot3 = 0
     boolup = False
     booldown = False
     boolright = False
