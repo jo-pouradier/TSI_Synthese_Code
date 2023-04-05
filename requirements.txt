@@ -1,0 +1,7 @@
+Pillow
+numpy
+pyrr
+random
+glfw
+PyOpenGL
+matplotlib

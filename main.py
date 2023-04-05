@@ -1,240 +1,133 @@
-#!/usr/bin/env python3
-
-import os
-import OpenGL.GL as GL
-import glfw
+from viewerGL import ViewerGL
+import glutils
+from mesh import Mesh
+from cpe3d import Camera, Text
 import numpy as np
+from Entity import Entity
+import Humain
+import math
 import pyrr
 
-
-def init_window():
-    # initialisation de la librairie glfw
-    glfw.init()
-    # paramétrage du context opengl
-    glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 3)
-    glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 3)
-    glfw.window_hint(glfw.OPENGL_FORWARD_COMPAT, GL.GL_TRUE)
-    glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
-    # création et parametrage de la fenêtre
-    glfw.window_hint(glfw.RESIZABLE, True)  # changer en false
-    window = glfw.create_window(800, 800, 'OpenGL', None, None)
-    # parametrage de la fonction de gestion des évènements
-    glfw.set_key_callback(window, key_callback)
-    return window
-
-
-def init_context(window):
-    # activation du context OpenGL pour la fenêtre
-    glfw.make_context_current(window)
-    glfw.swap_interval(1)
-    # activation de la gestion de la profondeur
-    GL.glEnable(GL.GL_DEPTH_TEST)
-    # choix de la couleur de fond
-    GL.glClearColor(0, 0, 1, 1)
-    print(f"OpenGL: {GL.glGetString(GL.GL_VERSION).decode('ascii')}")
-
-
-def init_program():
-    program = create_program_from_file("shader.vert", "shader.frag")
-    GL.glUseProgram(program)
-
-
-def init_data():
-    sommets = np.array(((0, 0, 0), (1, 0, 0), (0, 1, 0)), np.float32)
-    # attribution d'une liste d'e ́tat (1 indique la cre ́ation d'une seule liste)
-    vao = GL.glGenVertexArrays(1)
-    # affectation de la liste d'e ́tat courante
-    GL.glBindVertexArray(vao)
-    # attribution d’un buffer de donnees (1 indique la cre ́ation d’un seul buffer)
-    vbo = GL.glGenBuffers(1)
-    # affectation du buffer courant
-    GL.glBindBuffer(GL.GL_ARRAY_BUFFER, vbo)
-    # copie des donnees des sommets sur la carte graphique
-    GL.glBufferData(GL.GL_ARRAY_BUFFER, sommets, GL.GL_STATIC_DRAW)
-    # Les deux commandes suivantes sont stockees dans l'etat du vao courant
-    # # Active l'utilisation des donnees de positions
-    # (le 0 correspond a la location dans le vertex shader)
-    GL.glEnableVertexAttribArray(0)
-    # Indique comment le buffer courant (dernier vbo "binde")
-    # est utilise pour les positions des sommets
-    GL.glVertexAttribPointer(0, 3, GL.GL_FLOAT, GL.GL_FALSE, 0, None)
-
-
-def run(window):
-    # boucle d'affichage
-    global boolleft
-    global deltaX, deltaY
-    while not glfw.window_should_close(window):
-        # nettoyage de la fenêtre : fond et profondeur
-        GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
-
-        #  l'affichage se fera ici
-        GL.glDrawArrays(GL.GL_TRIANGLES, 0, 3)  # ou avec GL.GL_LINE_LOOP
-        # GL.glPointSize(20.0) #changement de la taille des points
-        # GL.glDrawArrays(GL.GL_POINTS, 0, 3)
-        # GL.glDrawArrays(GL.GL_LINE_LOOP, 0, 3) affichage non plein
-
-        # changement de buffer d'affichage pour éviter un effet de scintillement
-        glfw.swap_buffers(window)
-        # gestion des évènements
-        glfw.poll_events()
-        glfw.set_key_callback(window, key_callback)
-        display_callback()
-
-
-def changeColorBack():
-    global color_Back
-    colorisation = (0, 0, 0)
-    if color_Back == "g":
-        colorisation = (0, 1, 0)
-    if color_Back == "r":
-        colorisation = (1, 0, 0)
-    if color_Back == "b":
-        colorisation = (0, 0, 1)
-    r, g, b = colorisation
-    GL.glClearColor(r, g, b, 1)
-
-
-def key_callback(win, key, scancode, action, mods):
-    # sortie du programme si appui sur la touche 'echap'
-    if key == glfw.KEY_ESCAPE and action == glfw.PRESS:
-        glfw.set_window_should_close(win, glfw.TRUE)
-
-    global boolup, booldown, boolleft, boolright
-    global boolPhiZ
-    global PhiZ
-    global color_Back
-    global rot3
-
-    deltaPos = 0.02
-
-    global deltaX, deltaY
-
-    if key == glfw.KEY_UP and action == glfw.PRESS:
-        boolup = True
-    if key == glfw.KEY_RIGHT and action == glfw.PRESS:
-        boolright = True
-    if key == glfw.KEY_DOWN and action == glfw.PRESS:
-        booldown = True
-    if key == glfw.KEY_LEFT and action == glfw.PRESS:
-        boolleft = True
-
-    if key == glfw.KEY_UP and action == glfw.RELEASE:
-        boolup = False
-    if key == glfw.KEY_RIGHT and action == glfw.RELEASE:
-        boolright = False
-    if key == glfw.KEY_DOWN and action == glfw.RELEASE:
-        booldown = False
-    if key == glfw.KEY_LEFT and action == glfw.RELEASE:
-        boolleft = False
-
-    if key == glfw.KEY_G and action == glfw.PRESS:
-        color_Back = "g"
-    if key == glfw.KEY_R and action == glfw.PRESS:
-        color_Back = "r"
-    if key == glfw.KEY_B and action == glfw.PRESS:
-        color_Back = "b"
-
-    if key == glfw.KEY_J and action == glfw.PRESS:
-        boolPhiZ = True
-    if key == glfw.KEY_L and action == glfw.PRESS:
-        boolPhiZ = True
-    if key == glfw.KEY_J and action == glfw.RELEASE:
-        boolPhiZ = False
-    if key == glfw.KEY_L and action == glfw.RELEASE:
-        boolPhiZ = False
-
-    if boolup:
-        deltaY += deltaPos
-    if booldown:
-        deltaY += -deltaPos
-    if boolright:
-        deltaX += deltaPos
-    if boolleft:
-        deltaX += -deltaPos
-
-    if boolPhiZ and key == glfw.KEY_L:
-        PhiZ -= 0.1
-    if boolPhiZ and key == glfw.KEY_J:
-        PhiZ += 0.1
-
-    changeColorBack()
-
-
-def display_callback():
-    global deltaX, deltaY
-    global rot, rot3, PhiZ
-    # Re ́cupe`re l'identifiant du programme courant
-    prog = GL.glGetIntegerv(GL.GL_CURRENT_PROGRAM)
-    # Re ́cupe`re l'identifiant de la variable translation dans le programme courant
-    loc = GL.glGetUniformLocation(prog, "translation")
-    # rotation
-    rot = GL.glGetUniformLocation(prog, "rotation")
-    rot3 = pyrr.matrix33.create_from_z_rotation(PhiZ)
-    rot4 = pyrr.matrix44.create_from_matrix33(rot3)
-    # Verifie que la variable existe
-    if loc == -1:
-        print("Pas de variable uniforme : translation")
-    GL.glUniform4f(loc, deltaX, deltaY, 0, 0)
-    if rot == -1:
-        print("Pas de variable uniforme : rotation")
-    # Modifie la variable pour le programme courant
-    GL.glUniformMatrix4fv(rot, 1, GL.GL_FALSE, rot4)
-
-
-# compilation d'un shader donne selon son type
-def compile_shader(shader_content, shader_type):
-    shader_id = GL.glCreateShader(shader_type)
-    GL.glShaderSource(shader_id, shader_content)
-    GL.glCompileShader(shader_id)
-    success = GL.glGetShaderiv(shader_id, GL.GL_COMPILE_STATUS)
-    if not success:
-        log = GL.glGetShaderInfoLog(shader_id).decode('ascii')
-        print(
-            f'{25*"-"}\nError compiling shader: \n\{shader_content}\n{5*"-"}\n{log}\n{25*"-"}')
-    return shader_id
-
-
-def create_program(vertex_source, fragment_source):
-    # creation d'un programme gpu
-    vs_id = compile_shader(vertex_source, GL.GL_VERTEX_SHADER)
-    fs_id = compile_shader(fragment_source, GL.GL_FRAGMENT_SHADER)
-    if vs_id and fs_id:
-        program_id = GL.glCreateProgram()
-        GL.glAttachShader(program_id, vs_id)
-        GL.glAttachShader(program_id, fs_id)
-        GL.glLinkProgram(program_id)
-        success = GL.glGetProgramiv(program_id, GL.GL_LINK_STATUS)
-        if not success:
-            log = GL.glGetProgramInfoLog(program_id).decode('ascii')
-            print(f'{25*"-"}\nError linking program:\n{log}\n{25*"-"}')
-        GL.glDeleteShader(vs_id)
-        GL.glDeleteShader(fs_id)
-    return program_id
-
-
-def create_program_from_file(vs_file, fs_file):
-    # creation d'un programme gpu a` partir de fichiers
-    vs_content = open(vs_file, 'r').read() if os.path.exists(vs_file)\
-        else print(f'{25*"-"}\nError reading file:\n{vs_file}\n{25*"-"}')
-    fs_content = open(fs_file, 'r').read() if os.path.exists(fs_file)\
-        else print(f'{25*"-"}\nError reading file:\n{fs_file}\n{25*"-"}')
-    return create_program(vs_content, fs_content)
-
-
 def main():
-    window = init_window()
-    init_context(window)
-    init_program()
-    init_data()
-    run(window)
-    glfw.terminate()
+    viewer = ViewerGL()
+
+    # Cam
+    cam = Camera(viewer)
+    viewer.set_camera(cam)
+    viewer.cam.transformation.translation.y = 1
+    viewer.cam.transformation.rotation_center = viewer.cam.transformation.translation.copy()
+
+    viewer.program3d_id = glutils.create_program_from_file('vert/shader.vert', 'frag/shader.frag')
+    viewer.programGUI_id = glutils.create_program_from_file('vert/gui.vert', 'frag/gui.frag')
+
+    dic_text = {}
+    dic_obj = {}
+    dic_vao = {}
+
+    #------------------------ Chargements des textures + objs ----------------------------
+
+    dic_text["pyramid"] = glutils.load_texture("Textures/architecture.jpg")
+    dic_text["sol"] = glutils.load_texture("Textures/TextureSand.jpeg")
+    dic_text["humain"] = glutils.load_texture("Textures/multicolor.png")
+    dic_text["cube"] = glutils.load_texture("Textures/cube.png")
+    dic_text["arrow"] = dic_text["humain"]
+    dic_text["line"] = dic_text["humain"]
+    dic_text["cube_bonus"] = glutils.load_texture("Textures/bloc_mario.png")
+
+    dic_obj["pyramid"] = Mesh.load_obj("Textures/pyramid.obj")
+    dic_obj["pyramid"].normalize()
+    dic_obj["pyramid"].apply_matrix(pyrr.matrix44.create_from_scale([0.25, 0.25, 0.25, 1]))
+
+    dic_obj["humain"] = Mesh.load_obj("Textures/homme.obj")
+    dic_obj["humain"].normalize()
+    dic_obj["humain"].apply_matrix(pyrr.matrix44.create_from_scale([0.5, 0.5, 0.5, 1]))
+   
+    #bounding_box
+    dic_obj["cube_pyramid"] = Mesh.load_obj("Textures/cube.obj")
+    dic_obj["cube_pyramid"].normalize()
+    dic_obj["cube_pyramid"].apply_matrix(pyrr.matrix44.create_from_scale([0.25, 0.25, 0.25, 1]))
+    dic_obj["cube_humain"] = Mesh.load_obj("Textures/cube.obj")
+    dic_obj["cube_humain"].normalize()
+    dic_obj["cube_humain"].apply_matrix(pyrr.matrix44.create_from_scale([0.2, 0.5, 0.2, 1]))
+    dic_obj["cube_arrow"] = Mesh.load_obj("Textures/cube.obj")
+    dic_obj["cube_arrow"].normalize()
+    dic_obj["cube_arrow"].apply_matrix(pyrr.matrix44.create_from_scale([0.15, 0.15, 0.25, 1]))
+    dic_obj["line"] = Mesh.load_obj("Textures/cube.obj")
+    dic_obj["line"].normalize()
+    dic_obj["line"].apply_matrix(pyrr.matrix44.create_from_scale([0.006, 0.006, 20, 1]))
+    dic_obj["cube_bonus"] = Mesh.load_obj("Textures/cube.obj")
+    dic_obj["cube_bonus"].normalize()
+    dic_obj["cube_bonus"].apply_matrix(pyrr.matrix44.create_from_scale([0.25, 0.25, 0.25, 1]))
+
+    dic_obj["arrow"] = Mesh.load_obj("Textures/arrow.obj")
+    dic_obj["arrow"].normalize()
+    dic_obj["arrow"].apply_matrix(pyrr.matrix44.create_from_scale([1, 1, 0.15, 1]))
+
+    #chargement sol
+    m = Mesh()
+    p0, p1, p2, p3 = [-25, 0, -25], [25, 0, -25], [25, 0, 25], [-25, 0, 25]
+    n, c = [0, 1, 0], [1, 1, 1]
+    t0, t1, t2, t3 = [0, 0], [1, 0], [1, 1], [0, 1]
+    m.vertices = np.array([[p0 + n + c + t0], [p1 + n + c + t1],[p2 + n + c + t2], [p3 + n + c + t3]], np.float32)
+    m.faces = np.array([[0, 1, 2], [0, 2, 3]], np.uint32)
+    dic_obj["sol"] = m
+
+    for i in dic_obj :
+        dic_vao[i] = dic_obj[i].load_to_gpu()
+
+    viewer.dic_obj = dic_obj
+    viewer.dic_text = dic_text
+    viewer.dic_vao = dic_vao
+
+    #------------------------Fin Chargements des textures + objs ---------------------------
+
+    # humain
+    humain = Humain.Humain(vie=10, coord=[0,0, 0], rot=[0, 0, 0], obj=dic_obj["humain"],texture=dic_text["humain"], viewer=viewer, name="humain",vao_obj=dic_vao["humain"])
+    humain.create()
+    humain.size = pyrr.Vector3([0.2, 0.5, 0.2])
+    humain.v_proj = 0.2
+    humain.object.transformation.rotation_euler[pyrr.euler.index().yaw] = math.pi # il faut mettre l'humain a l'endroit
+    
+    # Sol
+    sol  = Entity(vie=1, coord=[0,0,0], rot=[0,math.pi/2,math.pi/2], obj=dic_obj["sol"],texture=dic_text["sol"],viewer=viewer,vao_obj = dic_vao["sol"],name="sol")
+    sol.create()
+   
+    #Test "line"
+    line = Entity(vie = 1, coord=[0,0,0], rot=[0,0,math.pi/2], obj=dic_obj["line"],texture=dic_text["line"],viewer=viewer, vao_obj = dic_vao["line"],name="line")
+    line.create()
+    line.object.transformation.rotation_euler[pyrr.euler.index().roll] = math.pi/2
+    humain.line = line
+    
+    # Text Pause
+    vao_obj = Text.initalize_geometry()
+    texture = glutils.load_texture('Textures/fontB2.png')
+    text_pause = Text('Pause', np.array([-0.8, 0.3], np.float32), np.array([0.8, 0.8], np.float32), vao_obj, 2, viewer.programGUI_id, texture)
+    viewer.text_pause = text_pause
+
+    # Text vie du joueur
+    vao_obj = Text.initalize_geometry()
+    texture = glutils.load_texture('Textures/fontB2.png')
+    text_life = Text(f'Vie: {humain.life}', np.array([-0.95, -0.95], np.float32), np.array([-0.65, -0.85], np.float32), vao_obj, 2, viewer.programGUI_id, texture)
+    viewer.text_life = text_life
+   
+    # Text charactéristique joueur
+    vao_obj = Text.initalize_geometry()
+    texture = glutils.load_texture('Textures/fontB2.png')
+    V_init = humain.jumping_force/humain.weight * viewer.dt
+    h= int(((0.5 * V_init**2)/viewer.gravity) *10) /10
+    text_character = Text(f"V: {int(humain.delta_posZ * 100)/100 * 60}m/s, Vcoté: {int(humain.delta_posX* 100)/100*60}m/s, Fire rate:{int(1/humain.timer_shoot* 10)/10}/s a {int(humain.v_proj*10)/10*60}m/s , saut: {-h}m",
+        np.array([-0.95, 0.85], np.float32), np.array([0.95, 0.9], np.float32), vao_obj, 2, viewer.programGUI_id, texture)
+    viewer.text_character = text_character
+
+    # Text score du joueur
+    humain.score = 0
+    vao_obj = Text.initalize_geometry()
+    texture = glutils.load_texture('Textures/fontB2.png')
+    text_score = Text(f'score: {humain.score}', np.array([0.62, -0.95], np.float32), np.array([0.95, -0.85], np.float32), vao_obj, 2, viewer.programGUI_id, texture)
+    viewer.text_score = text_score
+
+    viewer.run()
 
 
 if __name__ == '__main__':
-    deltaX, deltaY, deltaZ = 0, 0, 0
-    PhiX, PhiY, PhiZ = 0, 0, 0
-    boolup, booldown, boolright, boolleft = False, False, False, False
-    boolPhiZ = False
-    color_Back = "b"
     main()
